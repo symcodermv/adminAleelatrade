@@ -1,0 +1,2621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Aleela Trade</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    <style>
+        :root {
+            --primary: #2ecc71;
+            --primary-dark: #27ae60;
+            --secondary: #3498db;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --radius-sm: 0.5rem;
+            --radius-md: 0.75rem;
+            --radius-lg: 1rem;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #f5f7fa;
+            color: var(--dark);
+            min-height: 100vh;
+        }
+        
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: var(--dark);
+            color: white;
+            padding: 1.5rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            padding: 0 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .logo h2 {
+            color: white;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .logo i {
+            color: var(--primary);
+        }
+        
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 0 1rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .nav-link i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 1.5rem;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        
+        /* Dashboard Cards */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .card-title {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .card-icon.orders { background: rgba(52, 152, 219, 0.1); color: var(--secondary); }
+        .card-icon.products { background: rgba(46, 204, 113, 0.1); color: var(--primary); }
+        .card-icon.revenue { background: rgba(155, 89, 182, 0.1); color: #9b59b6; }
+        .card-icon.customers { background: rgba(243, 156, 18, 0.1); color: var(--warning); }
+        
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
+        }
+        
+        .card-change {
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .card-change.positive { color: var(--primary); }
+        .card-change.negative { color: var(--danger); }
+        
+        /* Tables */
+        .table-container {
+            background: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2rem;
+        }
+        
+        .table-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .table-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: var(--gray-100);
+        }
+        
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+            color: var(--gray-700);
+        }
+        
+        tr:hover {
+            background: var(--gray-50);
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        .btn-xs {
+            padding: 0.125rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        /* Status badges */
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .status-pending { background: rgba(243, 156, 18, 0.1); color: var(--warning); }
+        .status-processing { background: rgba(52, 152, 219, 0.1); color: var(--secondary); }
+        .status-completed { background: rgba(46, 204, 113, 0.1); color: var(--primary); }
+        .status-cancelled { background: rgba(231, 76, 60, 0.1); color: var(--danger); }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--gray-700);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            color: var(--gray-600);
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+        
+        /* File Upload */
+        .file-upload-area {
+            border: 2px dashed var(--gray-300);
+            border-radius: var(--radius-md);
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+        
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(46, 204, 113, 0.02);
+        }
+        
+        .file-upload-area i {
+            font-size: 2rem;
+            color: var(--gray-400);
+            margin-bottom: 1rem;
+        }
+        
+        .file-preview {
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            background: var(--gray-100);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            margin-top: 1rem;
+        }
+        
+        .file-preview i {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        
+        .file-info {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .file-size {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+        
+        .remove-file {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 1.25rem;
+        }
+        
+        /* Payment Slip Styles */
+        .payment-slip-container {
+            background: var(--gray-100);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .payment-slip-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .payment-slip-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        /* Category Tags */
+        .category-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .category-tag {
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .category-tag .remove-tag {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 0.875rem;
+            padding: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Login Page */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 3rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .login-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .login-logo h1 {
+            color: var(--dark);
+            font-size: 1.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+        
+        .login-logo i {
+            color: var(--primary);
+        }
+        
+        .login-message {
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .login-message.error {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(231, 76, 60, 0.2);
+        }
+        
+        /* Image Preview */
+        .image-preview-container {
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 1rem;
+        }
+        
+        .pdf-preview {
+            background: var(--gray-100);
+            padding: 2rem;
+            text-align: center;
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+        }
+        
+        .pdf-preview i {
+            font-size: 4rem;
+            color: var(--danger);
+            margin-bottom: 1rem;
+        }
+        
+        /* Payment Slip Preview Modal */
+        .payment-preview-modal .modal-content {
+            max-width: 800px;
+        }
+        
+        .payment-slip-image {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: var(--radius-md);
+            margin: 0 auto;
+            display: block;
+        }
+        
+        .payment-slip-details {
+            background: var(--gray-100);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            margin-top: 1rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                padding: 1rem 0;
+            }
+            
+            .logo span, .nav-link span {
+                display: none;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+            
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .table-container {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="login-container">
+        <div class="login-card">
+            <div class="login-logo">
+                <h1>
+                    <i class="fas fa-shopping-basket"></i>
+                    <span>Admin Panel</span>
+                </h1>
+                <p style="color: var(--gray-600); margin-top: 0.5rem;">Aleela Trade Management System</p>
+            </div>
+            
+            <div id="loginMessage" class="login-message" style="display: none;"></div>
+            
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-control" id="adminUsername" placeholder="Enter admin username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" id="adminPassword" placeholder="Enter password" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login to Admin Panel
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Admin Panel (Initially Hidden) -->
+    <div id="adminPanel" class="admin-container" style="display: none;">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <h2>
+                    <i class="fas fa-shopping-basket"></i>
+                    <span>Aleela Trade</span>
+                </h2>
+                <small style="color: var(--gray-500);">Admin Panel</small>
+            </div>
+            
+            <div class="nav-links">
+                <a href="#" class="nav-link active" data-page="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-link" data-page="products">
+                    <i class="fas fa-box"></i>
+                    <span>Products</span>
+                </a>
+                <a href="#" class="nav-link" data-page="orders">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>Orders</span>
+                </a>
+                <a href="#" class="nav-link" data-page="customers">
+                    <i class="fas fa-users"></i>
+                    <span>Customers</span>
+                </a>
+                <a href="#" class="nav-link" data-page="categories">
+                    <i class="fas fa-tags"></i>
+                    <span>Categories</span>
+                </a>
+                <a href="#" class="nav-link" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="#" class="nav-link" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h1 id="pageTitle">Dashboard</h1>
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div>
+                        <div id="userName">Admin User</div>
+                        <small style="color: var(--gray-500);" id="userRole">Administrator</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Content Area -->
+            <div id="contentArea">
+                <!-- Content will be loaded here dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Product Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Product</h3>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <div class="form-group">
+                        <label class="form-label">Product Name</label>
+                        <input type="text" class="form-control" id="productName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="productDescription" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Price (MVR)</label>
+                        <input type="number" class="form-control" id="productPrice" step="0.01" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Original Price (MVR)</label>
+                        <input type="number" class="form-control" id="productOriginalPrice" step="0.01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select class="form-control" id="productCategory" required>
+                            <option value="">Select Category</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Stock Quantity</label>
+                        <input type="number" class="form-control" id="productStock" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Image URL</label>
+                        <input type="text" class="form-control" id="productImage" placeholder="https://example.com/image.jpg">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            <input type="checkbox" id="productFeatured"> Featured Product
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveProductBtn">Save Product</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Settings</h3>
+                <button class="modal-close" id="settingsModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="settingsForm">
+                    <div class="form-group">
+                        <label class="form-label">Minimum Order (MVR)</label>
+                        <input type="number" class="form-control" id="minOrder" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Delivery Fee (MVR)</label>
+                        <input type="number" class="form-control" id="deliveryFee" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Free Delivery Threshold (MVR)</label>
+                        <input type="number" class="form-control" id="freeDeliveryThreshold" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Store Phone Number</label>
+                        <input type="text" class="form-control" id="storePhone" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Store Email</label>
+                        <input type="email" class="form-control" id="storeEmail" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelSettingsBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Category Modal -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="categoryModalTitle">Add New Category</h3>
+                <button class="modal-close" id="categoryModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    <div class="form-group">
+                        <label class="form-label">Category Name</label>
+                        <input type="text" class="form-control" id="categoryName" placeholder="e.g., Fruits, Vegetables" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Category ID (no spaces)</label>
+                        <input type="text" class="form-control" id="categoryId" placeholder="e.g., fruits, vegetables" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Icon Class (Font Awesome)</label>
+                        <input type="text" class="form-control" id="categoryIcon" placeholder="e.g., fas fa-apple-alt" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelCategoryBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveCategoryBtn">Save Category</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Payment Slip Modal -->
+    <div id="paymentSlipModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Upload Payment Slip</h3>
+                <button class="modal-close" id="paymentModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Order ID</label>
+                    <input type="text" class="form-control" id="paymentOrderId" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Customer Name</label>
+                    <input type="text" class="form-control" id="paymentCustomerName" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Amount (MVR)</label>
+                    <input type="text" class="form-control" id="paymentAmount" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Payment Slip</label>
+                    <div class="file-upload-area" id="paymentUploadArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Click to upload payment slip</p>
+                        <small>JPG, PNG or PDF (Max 5MB)</small>
+                        <input type="file" id="paymentFile" accept=".jpg,.jpeg,.png,.pdf" hidden>
+                    </div>
+                    
+                    <div class="file-preview" id="paymentFilePreview">
+                        <i class="fas fa-file-invoice"></i>
+                        <div class="file-info">
+                            <div class="file-name" id="paymentFileName"></div>
+                            <div class="file-size" id="paymentFileSize"></div>
+                        </div>
+                        <button class="remove-file" id="removePaymentFile">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="image-preview-container" id="paymentImagePreview">
+                        <!-- Image preview will be shown here -->
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Payment Reference Number</label>
+                    <input type="text" class="form-control" id="paymentReference" placeholder="Enter bank reference number">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelPaymentBtn">Cancel</button>
+                <button class="btn btn-primary" id="savePaymentBtn">
+                    <i class="fas fa-upload"></i>
+                    Upload Payment Slip
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Payment Slip Preview Modal -->
+    <div id="paymentSlipPreviewModal" class="modal payment-preview-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Payment Slip</h3>
+                <button class="modal-close" id="paymentPreviewModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="paymentSlipContent">
+                    <!-- Payment slip content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="closePaymentPreviewBtn">Close</button>
+                <button class="btn btn-primary" id="downloadPaymentSlipBtn">
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== FIREBASE CONFIGURATION =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyARF48_dYIO4e9aBZguW0Bru7_BvcqGJm0",
+            authDomain: "aleelatrade-31ebf.firebaseapp.com",
+            databaseURL: "https://aleelatrade-31ebf-default-rtdb.firebaseio.com",
+            projectId: "aleelatrade-31ebf",
+            storageBucket: "aleelatrade-31ebf.firebasestorage.app",
+            messagingSenderId: "902208155198",
+            appId: "1:902208155198:web:35ea4005bdee7a8c57eb6f",
+            measurementId: "G-2YY9NV98HM"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        const storage = firebase.storage();
+
+        // State
+        let currentAdmin = null;
+        let currentPage = 'dashboard';
+        let editingProductId = null;
+        let editingCategoryId = null;
+        let currentOrderId = null;
+        let categories = [];
+        let currentPaymentFile = null;
+
+        // DOM Elements
+        const loginPage = document.getElementById('loginPage');
+        const adminPanel = document.getElementById('adminPanel');
+        const adminLoginForm = document.getElementById('adminLoginForm');
+        const loginMessage = document.getElementById('loginMessage');
+        const contentArea = document.getElementById('contentArea');
+        const pageTitle = document.getElementById('pageTitle');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const userRole = document.getElementById('userRole');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const productModal = document.getElementById('productModal');
+        const modalClose = document.getElementById('modalClose');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const saveProductBtn = document.getElementById('saveProductBtn');
+        const productForm = document.getElementById('productForm');
+        const productCategorySelect = document.getElementById('productCategory');
+        const settingsModal = document.getElementById('settingsModal');
+        const settingsModalClose = document.getElementById('settingsModalClose');
+        const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const settingsForm = document.getElementById('settingsForm');
+        const categoryModal = document.getElementById('categoryModal');
+        const categoryModalClose = document.getElementById('categoryModalClose');
+        const cancelCategoryBtn = document.getElementById('cancelCategoryBtn');
+        const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+        const categoryForm = document.getElementById('categoryForm');
+        const categoryModalTitle = document.getElementById('categoryModalTitle');
+        const paymentSlipModal = document.getElementById('paymentSlipModal');
+        const paymentModalClose = document.getElementById('paymentModalClose');
+        const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
+        const savePaymentBtn = document.getElementById('savePaymentBtn');
+        const paymentUploadArea = document.getElementById('paymentUploadArea');
+        const paymentFile = document.getElementById('paymentFile');
+        const paymentFilePreview = document.getElementById('paymentFilePreview');
+        const removePaymentFile = document.getElementById('removePaymentFile');
+        const paymentImagePreview = document.getElementById('paymentImagePreview');
+        const paymentSlipPreviewModal = document.getElementById('paymentSlipPreviewModal');
+        const paymentPreviewModalClose = document.getElementById('paymentPreviewModalClose');
+        const closePaymentPreviewBtn = document.getElementById('closePaymentPreviewBtn');
+        const downloadPaymentSlipBtn = document.getElementById('downloadPaymentSlipBtn');
+        const paymentSlipContent = document.getElementById('paymentSlipContent');
+
+        // Admin credentials
+        const ADMIN_CREDENTIALS = {
+            username: 'admin',
+            password: 'admin123'
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            checkAuth();
+        });
+
+        function setupEventListeners() {
+            // Login form
+            adminLoginForm.addEventListener('submit', handleAdminLogin);
+            
+            // Navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = link.dataset.page;
+                    if (page) {
+                        loadPage(page);
+                        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                        link.classList.add('active');
+                    }
+                });
+            });
+            
+            // Logout
+            logoutBtn.addEventListener('click', handleLogout);
+            
+            // Modal close buttons
+            modalClose.addEventListener('click', () => productModal.classList.remove('active'));
+            cancelBtn.addEventListener('click', () => productModal.classList.remove('active'));
+            settingsModalClose.addEventListener('click', () => settingsModal.classList.remove('active'));
+            cancelSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('active'));
+            categoryModalClose.addEventListener('click', () => categoryModal.classList.remove('active'));
+            cancelCategoryBtn.addEventListener('click', () => categoryModal.classList.remove('active'));
+            paymentModalClose.addEventListener('click', () => {
+                paymentSlipModal.classList.remove('active');
+                resetPaymentUpload();
+            });
+            cancelPaymentBtn.addEventListener('click', () => {
+                paymentSlipModal.classList.remove('active');
+                resetPaymentUpload();
+            });
+            paymentPreviewModalClose.addEventListener('click', () => paymentSlipPreviewModal.classList.remove('active'));
+            closePaymentPreviewBtn.addEventListener('click', () => paymentSlipPreviewModal.classList.remove('active'));
+            
+            // Save buttons
+            saveProductBtn.addEventListener('click', saveProduct);
+            saveSettingsBtn.addEventListener('click', saveSettings);
+            saveCategoryBtn.addEventListener('click', saveCategory);
+            savePaymentBtn.addEventListener('click', savePaymentSlip);
+            downloadPaymentSlipBtn.addEventListener('click', downloadPaymentSlip);
+            
+            // File upload
+            paymentUploadArea.addEventListener('click', () => paymentFile.click());
+            paymentFile.addEventListener('change', handlePaymentFileUpload);
+            removePaymentFile.addEventListener('click', () => {
+                resetPaymentUpload();
+            });
+        }
+
+        function checkAuth() {
+            const admin = localStorage.getItem('aleela_admin');
+            if (admin) {
+                currentAdmin = JSON.parse(admin);
+                showAdminPanel();
+                loadPage('dashboard');
+            }
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+            
+            if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+                currentAdmin = {
+                    username: username,
+                    name: 'Admin User',
+                    role: 'Administrator'
+                };
+                
+                localStorage.setItem('aleela_admin', JSON.stringify(currentAdmin));
+                showAdminPanel();
+                loadPage('dashboard');
+            } else {
+                showMessage('Invalid username or password', 'error');
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('aleela_admin');
+            currentAdmin = null;
+            adminPanel.style.display = 'none';
+            loginPage.style.display = 'flex';
+        }
+
+        function showAdminPanel() {
+            loginPage.style.display = 'none';
+            adminPanel.style.display = 'flex';
+            
+            if (currentAdmin) {
+                userAvatar.textContent = currentAdmin.name.charAt(0);
+                userName.textContent = currentAdmin.name;
+                userRole.textContent = currentAdmin.role;
+            }
+        }
+
+        function showMessage(message, type = 'error') {
+            loginMessage.textContent = message;
+            loginMessage.style.display = 'block';
+            loginMessage.className = `login-message ${type}`;
+            
+            setTimeout(() => {
+                loginMessage.style.display = 'none';
+            }, 3000);
+        }
+
+        function resetPaymentUpload() {
+            paymentFile.value = '';
+            paymentFilePreview.style.display = 'none';
+            paymentUploadArea.style.display = 'block';
+            paymentImagePreview.style.display = 'none';
+            paymentImagePreview.innerHTML = '';
+            document.getElementById('paymentReference').value = '';
+            currentPaymentFile = null;
+        }
+
+        async function loadPage(page) {
+            currentPage = page;
+            pageTitle.textContent = page.charAt(0).toUpperCase() + page.slice(1);
+            
+            // Load categories for all pages
+            await loadCategoriesData();
+            
+            switch(page) {
+                case 'dashboard':
+                    await loadDashboard();
+                    break;
+                case 'products':
+                    await loadProducts();
+                    break;
+                case 'orders':
+                    await loadOrders();
+                    break;
+                case 'customers':
+                    await loadCustomers();
+                    break;
+                case 'categories':
+                    await loadCategoriesPage();
+                    break;
+                case 'settings':
+                    await loadSettings();
+                    break;
+            }
+        }
+
+        async function loadCategoriesData() {
+            try {
+                const snapshot = await database.ref('categories').once('value');
+                if (snapshot.exists()) {
+                    categories = Object.entries(snapshot.val()).map(([id, category]) => ({
+                        id,
+                        ...category
+                    }));
+                } else {
+                    // Default categories
+                    categories = [
+                        { id: 'fruits', name: 'Fruits', icon: 'fas fa-apple-alt' },
+                        { id: 'vegetables', name: 'Vegetables', icon: 'fas fa-carrot' },
+                        { id: 'dairy', name: 'Dairy & Eggs', icon: 'fas fa-egg' },
+                        { id: 'meat', name: 'Meat & Poultry', icon: 'fas fa-drumstick-bite' },
+                        { id: 'bakery', name: 'Bakery', icon: 'fas fa-bread-slice' },
+                        { id: 'beverages', name: 'Beverages', icon: 'fas fa-wine-bottle' }
+                    ];
+                    
+                    // Save default categories to database
+                    for (const category of categories) {
+                        await database.ref(`categories/${category.id}`).set({
+                            name: category.name,
+                            icon: category.icon
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        async function loadDashboard() {
+            try {
+                const productsSnapshot = await database.ref('products').once('value');
+                const ordersSnapshot = await database.ref('orders').once('value');
+                const usersSnapshot = await database.ref('users').once('value');
+                
+                const products = productsSnapshot.val() ? Object.keys(productsSnapshot.val()).length : 0;
+                const orders = ordersSnapshot.val() ? Object.keys(ordersSnapshot.val()).length : 0;
+                const customers = usersSnapshot.val() ? Object.keys(usersSnapshot.val()).length : 0;
+                
+                let revenue = 0;
+                if (ordersSnapshot.val()) {
+                    Object.values(ordersSnapshot.val()).forEach(order => {
+                        if (order.paymentStatus === 'completed') {
+                            revenue += order.total || 0;
+                        }
+                    });
+                }
+                
+                contentArea.innerHTML = `
+                    <div class="dashboard-cards">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Total Orders</div>
+                                <div class="card-icon orders">
+                                    <i class="fas fa-shopping-bag"></i>
+                                </div>
+                            </div>
+                            <div class="card-value">${orders}</div>
+                            <div class="card-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>12% from last month</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Products</div>
+                                <div class="card-icon products">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                            </div>
+                            <div class="card-value">${products}</div>
+                            <div class="card-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>8% from last month</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Revenue</div>
+                                <div class="card-icon revenue">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                            </div>
+                            <div class="card-value">MVR ${revenue.toLocaleString('en-MV', { minimumFractionDigits: 2 })}</div>
+                            <div class="card-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>15% from last month</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">Customers</div>
+                                <div class="card-icon customers">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                            </div>
+                            <div class="card-value">${customers}</div>
+                            <div class="card-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>20% from last month</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Recent Orders</h3>
+                            <div class="table-actions">
+                                <button class="btn btn-primary" onclick="exportOrders()">
+                                    <i class="fas fa-download"></i>
+                                    Export
+                                </button>
+                            </div>
+                        </div>
+                        <div id="recentOrdersTable">
+                            Loading...
+                        </div>
+                    </div>
+                `;
+                
+                await loadRecentOrders();
+                
+            } catch (error) {
+                contentArea.innerHTML = `<div style="color: var(--danger);">Error loading dashboard: ${error.message}</div>`;
+            }
+        }
+
+        async function loadRecentOrders() {
+            try {
+                const snapshot = await database.ref('orders').limitToLast(10).once('value');
+                const orders = snapshot.val();
+                
+                if (!orders) {
+                    document.getElementById('recentOrdersTable').innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--gray-500);">No orders found</div>';
+                    return;
+                }
+                
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Payment</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                Object.entries(orders).reverse().forEach(([id, order]) => {
+                    const date = new Date(order.createdAt);
+                    const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    // Check if payment slip exists
+                    const hasPaymentSlip = order.bankTransfer?.receiptUrl;
+                    const paymentSlipIcon = hasPaymentSlip ? 
+                        '<i class="fas fa-file-invoice" style="color: var(--primary); margin-left: 5px; cursor: pointer;" title="View payment slip" onclick="viewPaymentSlip(\'' + id + '\')"></i>' : 
+                        '';
+                    
+                    html += `
+                        <tr>
+                            <td>${order.orderId || id.substring(0, 8)}</td>
+                            <td>${order.customer?.fullName || 'N/A'}</td>
+                            <td>MVR ${order.total?.toFixed(2) || '0.00'}</td>
+                            <td><span class="status-badge status-${order.status || 'pending'}">${(order.status || 'pending').toUpperCase()}</span></td>
+                            <td>
+                                <span class="status-badge status-${order.paymentStatus || 'pending_review'}">${(order.paymentStatus || 'pending_review').toUpperCase()}</span>
+                                ${paymentSlipIcon}
+                            </td>
+                            <td>${formattedDate}</td>
+                            <td>
+                                <button class="btn btn-xs btn-secondary" onclick="viewOrder('${id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-xs btn-danger" onclick="deleteOrder('${id}', '${order.orderId || id.substring(0, 8)}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                document.getElementById('recentOrdersTable').innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('recentOrdersTable').innerHTML = `<div style="color: var(--danger); padding: 1rem;">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function loadProducts() {
+            try {
+                const snapshot = await database.ref('products').once('value');
+                const products = snapshot.val();
+                
+                contentArea.innerHTML = `
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Products (${products ? Object.keys(products).length : 0})</h3>
+                            <div class="table-actions">
+                                <button class="btn btn-primary" onclick="openProductModal()">
+                                    <i class="fas fa-plus"></i>
+                                    Add Product
+                                </button>
+                            </div>
+                        </div>
+                        <div id="productsTable">
+                            Loading...
+                        </div>
+                    </div>
+                `;
+                
+                if (!products) {
+                    document.getElementById('productsTable').innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--gray-500);">No products found</div>';
+                    return;
+                }
+                
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                Object.entries(products).forEach(([id, product]) => {
+                    const stockClass = product.stock > 20 ? 'stock-in' : product.stock > 0 ? 'stock-low' : 'stock-out';
+                    const stockText = product.stock > 20 ? 'In Stock' : product.stock > 0 ? 'Low Stock' : 'Out of Stock';
+                    const category = categories.find(c => c.id === product.category) || { name: product.category || 'Uncategorized' };
+                    
+                    html += `
+                        <tr>
+                            <td><img src="${product.image || 'https://via.placeholder.com/50'}" alt="${product.name}" style="width: 50px; height: 50px; object-fit: cover; border-radius: var(--radius-sm);"></td>
+                            <td>
+                                <strong>${product.name}</strong>
+                                ${product.featured ? '<span style="color: var(--primary); font-size: 0.75rem; margin-left: 0.5rem;"><i class="fas fa-star"></i> Featured</span>' : ''}
+                                <br><small style="color: var(--gray-500);">${product.description.substring(0, 50)}...</small>
+                            </td>
+                            <td>${category.name}</td>
+                            <td>MVR ${product.price?.toFixed(2) || '0.00'}</td>
+                            <td>${product.stock || 0}</td>
+                            <td><span class="status-badge ${stockClass}">${stockText}</span></td>
+                            <td style="white-space: nowrap;">
+                                <button class="btn btn-xs btn-secondary" onclick="editProduct('${id}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-xs btn-danger" onclick="deleteProduct('${id}', '${product.name}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                document.getElementById('productsTable').innerHTML = html;
+                
+            } catch (error) {
+                contentArea.innerHTML = `<div style="color: var(--danger);">Error loading products: ${error.message}</div>`;
+            }
+        }
+
+        function openProductModal(product = null) {
+            editingProductId = product ? product.id : null;
+            
+            // Populate category dropdown
+            productCategorySelect.innerHTML = '<option value="">Select Category</option>';
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                productCategorySelect.appendChild(option);
+            });
+            
+            if (product) {
+                // Edit mode
+                document.getElementById('productName').value = product.name;
+                document.getElementById('productDescription').value = product.description;
+                document.getElementById('productPrice').value = product.price;
+                document.getElementById('productOriginalPrice').value = product.original_price || '';
+                document.getElementById('productCategory').value = product.category || '';
+                document.getElementById('productStock').value = product.stock;
+                document.getElementById('productImage').value = product.image || '';
+                document.getElementById('productFeatured').checked = product.featured || false;
+                
+                document.querySelector('.modal-title').textContent = 'Edit Product';
+            } else {
+                // Add mode
+                productForm.reset();
+                document.querySelector('.modal-title').textContent = 'Add New Product';
+            }
+            
+            productModal.classList.add('active');
+        }
+
+        async function saveProduct() {
+            const product = {
+                name: document.getElementById('productName').value,
+                description: document.getElementById('productDescription').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                original_price: parseFloat(document.getElementById('productOriginalPrice').value) || null,
+                category: document.getElementById('productCategory').value,
+                stock: parseInt(document.getElementById('productStock').value),
+                image: document.getElementById('productImage').value || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&fit=crop',
+                featured: document.getElementById('productFeatured').checked,
+                updatedAt: new Date().toISOString()
+            };
+            
+            try {
+                if (editingProductId) {
+                    await database.ref(`products/${editingProductId}`).update(product);
+                    alert('Product updated successfully!');
+                } else {
+                    await database.ref('products').push(product);
+                    alert('Product added successfully!');
+                }
+                
+                productModal.classList.remove('active');
+                loadProducts();
+                
+            } catch (error) {
+                alert('Error saving product: ' + error.message);
+            }
+        }
+
+        function editProduct(productId) {
+            database.ref(`products/${productId}`).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    openProductModal({ id: productId, ...snapshot.val() });
+                }
+            });
+        }
+
+        function deleteProduct(productId, productName) {
+            if (confirm(`Are you sure you want to delete "${productName}"?\n\nThis action cannot be undone.`)) {
+                database.ref(`products/${productId}`).remove()
+                    .then(() => {
+                        alert('Product deleted successfully!');
+                        loadProducts();
+                    })
+                    .catch(error => {
+                        alert('Error deleting product: ' + error.message);
+                    });
+            }
+        }
+
+        async function loadOrders() {
+            try {
+                const snapshot = await database.ref('orders').once('value');
+                const orders = snapshot.val();
+                
+                contentArea.innerHTML = `
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Orders (${orders ? Object.keys(orders).length : 0})</h3>
+                            <div class="table-actions">
+                                <button class="btn btn-primary" onclick="exportOrders()">
+                                    <i class="fas fa-download"></i>
+                                    Export
+                                </button>
+                                <button class="btn btn-danger" onclick="bulkDeleteOrders()">
+                                    <i class="fas fa-trash"></i>
+                                    Bulk Delete
+                                </button>
+                            </div>
+                        </div>
+                        <div id="ordersTable">
+                            Loading...
+                        </div>
+                    </div>
+                `;
+                
+                if (!orders) {
+                    document.getElementById('ordersTable').innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--gray-500);">No orders found</div>';
+                    return;
+                }
+                
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAllOrders"></th>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Payment</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                Object.entries(orders).reverse().forEach(([id, order]) => {
+                    const date = new Date(order.createdAt);
+                    const formattedDate = date.toLocaleDateString();
+                    
+                    // Check if payment slip exists
+                    const hasPaymentSlip = order.bankTransfer?.receiptUrl;
+                    const paymentSlipIcon = hasPaymentSlip ? 
+                        '<i class="fas fa-file-invoice" style="color: var(--primary); margin-left: 5px; cursor: pointer;" title="View payment slip" onclick="viewPaymentSlip(\'' + id + '\')"></i>' : 
+                        '';
+                    
+                    html += `
+                        <tr>
+                            <td><input type="checkbox" class="order-checkbox" data-id="${id}"></td>
+                            <td>${order.orderId || id.substring(0, 8)}</td>
+                            <td>${order.customer?.fullName || 'N/A'}<br><small>${order.customer?.phone || ''}</small></td>
+                            <td>${order.items?.length || 0} items</td>
+                            <td>MVR ${order.total?.toFixed(2) || '0.00'}</td>
+                            <td>
+                                <select class="form-control" style="width: 120px; padding: 0.25rem;" onchange="updateOrderStatus('${id}', this.value)">
+                                    <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
+                                    <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                    <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                </select>
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <select class="form-control" style="width: 140px; padding: 0.25rem;" onchange="updatePaymentStatus('${id}', this.value)">
+                                        <option value="pending_review" ${order.paymentStatus === 'pending_review' ? 'selected' : ''}>Pending Review</option>
+                                        <option value="processing" ${order.paymentStatus === 'processing' ? 'selected' : ''}>Processing</option>
+                                        <option value="completed" ${order.paymentStatus === 'completed' ? 'selected' : ''}>Completed</option>
+                                        <option value="failed" ${order.paymentStatus === 'failed' ? 'selected' : ''}>Failed</option>
+                                    </select>
+                                    ${hasPaymentSlip ? 
+                                        paymentSlipIcon : 
+                                        '<i class="fas fa-upload" style="color: var(--gray-400); cursor: pointer;" title="Upload payment slip" onclick="uploadPaymentSlip(\'' + id + '\')"></i>'}
+                                </div>
+                            </td>
+                            <td>${formattedDate}</td>
+                            <td style="white-space: nowrap;">
+                                <button class="btn btn-xs btn-secondary" onclick="viewOrder('${id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-xs btn-danger" onclick="deleteOrder('${id}', '${order.orderId || id.substring(0, 8)}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                document.getElementById('ordersTable').innerHTML = html;
+                
+                // Add select all functionality
+                const selectAll = document.getElementById('selectAllOrders');
+                if (selectAll) {
+                    selectAll.addEventListener('change', function() {
+                        const checkboxes = document.querySelectorAll('.order-checkbox');
+                        checkboxes.forEach(cb => cb.checked = this.checked);
+                    });
+                }
+                
+            } catch (error) {
+                contentArea.innerHTML = `<div style="color: var(--danger);">Error loading orders: ${error.message}</div>`;
+            }
+        }
+
+        async function updateOrderStatus(orderId, status) {
+            try {
+                await database.ref(`orders/${orderId}`).update({
+                    status: status,
+                    updatedAt: new Date().toISOString()
+                });
+                showToast('Order status updated successfully!', 'success');
+            } catch (error) {
+                showToast('Error updating order status: ' + error.message, 'error');
+            }
+        }
+
+        async function updatePaymentStatus(orderId, status) {
+            try {
+                await database.ref(`orders/${orderId}`).update({
+                    paymentStatus: status,
+                    updatedAt: new Date().toISOString()
+                });
+                showToast('Payment status updated successfully!', 'success');
+            } catch (error) {
+                showToast('Error updating payment status: ' + error.message, 'error');
+            }
+        }
+
+        async function viewOrder(orderId) {
+            try {
+                const snapshot = await database.ref(`orders/${orderId}`).once('value');
+                const order = snapshot.val();
+                
+                if (!order) {
+                    alert('Order not found!');
+                    return;
+                }
+                
+                const date = new Date(order.createdAt);
+                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                
+                let itemsHtml = '';
+                if (order.items) {
+                    order.items.forEach(item => {
+                        itemsHtml += `
+                            <tr>
+                                <td>${item.name}</td>
+                                <td>${item.quantity}</td>
+                                <td>MVR ${item.price?.toFixed(2)}</td>
+                                <td>MVR ${(item.price * item.quantity).toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+                }
+                
+                // Payment slip info
+                let paymentSlipHtml = '';
+                if (order.bankTransfer?.receiptUrl) {
+                    paymentSlipHtml = `
+                        <div class="payment-slip-container">
+                            <div class="payment-slip-info">
+                                <div>
+                                    <strong>Payment Slip:</strong> ${order.bankTransfer.receiptFileName || 'Uploaded file'}
+                                    <br>
+                                    <small>Uploaded: ${new Date(order.bankTransfer.uploadedAt).toLocaleDateString()}</small>
+                                    ${order.bankTransfer.paymentReference ? `<br><small>Reference: ${order.bankTransfer.paymentReference}</small>` : ''}
+                                </div>
+                                <div class="payment-slip-actions">
+                                    <button class="btn btn-xs btn-secondary" onclick="viewPaymentSlip('${orderId}')">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                    <button class="btn btn-xs btn-danger" onclick="removePaymentSlip('${orderId}')">
+                                        <i class="fas fa-trash"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                contentArea.innerHTML = `
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Order Details: ${order.orderId || orderId.substring(0, 8)}</h3>
+                            <div class="table-actions">
+                                <button class="btn btn-danger" onclick="deleteOrder('${orderId}', '${order.orderId || orderId.substring(0, 8)}')">
+                                    <i class="fas fa-trash"></i>
+                                    Delete Order
+                                </button>
+                                <button class="btn btn-secondary" onclick="loadPage('orders')">
+                                    <i class="fas fa-arrow-left"></i>
+                                    Back to Orders
+                                </button>
+                            </div>
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                                <div>
+                                    <h4 style="margin-bottom: 1rem; color: var(--dark);">Customer Information</h4>
+                                    <div style="background: var(--gray-100); padding: 1rem; border-radius: var(--radius-md);">
+                                        <p><strong>Name:</strong> ${order.customer?.fullName || 'N/A'}</p>
+                                        <p><strong>Phone:</strong> ${order.customer?.phone || 'N/A'}</p>
+                                        <p><strong>Email:</strong> ${order.customer?.email || 'N/A'}</p>
+                                        <p><strong>Address:</strong> ${order.customer?.address || 'N/A'}</p>
+                                        <p><strong>Instructions:</strong> ${order.customer?.instructions || 'None'}</p>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h4 style="margin-bottom: 1rem; color: var(--dark);">Order Information</h4>
+                                    <div style="background: var(--gray-100); padding: 1rem; border-radius: var(--radius-md);">
+                                        <p><strong>Order Date:</strong> ${formattedDate}</p>
+                                        <p><strong>Status:</strong> 
+                                            <select class="form-control" style="width: 120px; padding: 0.25rem; display: inline-block;" onchange="updateOrderStatus('${orderId}', this.value)">
+                                                <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                                <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processing</option>
+                                                <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                                <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                            </select>
+                                        </p>
+                                        <p><strong>Payment Status:</strong> 
+                                            <select class="form-control" style="width: 140px; padding: 0.25rem; display: inline-block;" onchange="updatePaymentStatus('${orderId}', this.value)">
+                                                <option value="pending_review" ${order.paymentStatus === 'pending_review' ? 'selected' : ''}>Pending Review</option>
+                                                <option value="processing" ${order.paymentStatus === 'processing' ? 'selected' : ''}>Processing</option>
+                                                <option value="completed" ${order.paymentStatus === 'completed' ? 'selected' : ''}>Completed</option>
+                                                <option value="failed" ${order.paymentStatus === 'failed' ? 'selected' : ''}>Failed</option>
+                                            </select>
+                                        </p>
+                                        <p><strong>Payment Method:</strong> ${order.paymentMethod || 'Bank Transfer'}</p>
+                                        ${order.bankTransfer?.accountNumber ? `<p><strong>Account Number:</strong> ${order.bankTransfer.accountNumber}</p>` : ''}
+                                        ${paymentSlipHtml}
+                                        <p><strong>Delivery:</strong> MVR ${order.shipping?.toFixed(2) || '0.00'}</p>
+                                        <p><strong>Tax:</strong> MVR ${order.tax?.toFixed(2) || '0.00'}</p>
+                                        <p><strong style="font-size: 1.25rem;">Total:</strong> MVR ${order.total?.toFixed(2) || '0.00'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h4 style="margin-bottom: 1rem; color: var(--dark);">Order Items</h4>
+                            <table style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>Price</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${itemsHtml}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" style="text-align: right; font-weight: 600;">Subtotal:</td>
+                                        <td>MVR ${order.subtotal?.toFixed(2) || '0.00'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" style="text-align: right; font-weight: 600;">Delivery:</td>
+                                        <td>MVR ${order.shipping?.toFixed(2) || '0.00'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" style="text-align: right; font-weight: 600;">Tax:</td>
+                                        <td>MVR ${order.tax?.toFixed(2) || '0.00'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" style="text-align: right; font-weight: 600; font-size: 1.125rem;">Total:</td>
+                                        <td style="font-weight: 600; font-size: 1.125rem; color: var(--primary);">MVR ${order.total?.toFixed(2) || '0.00'}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                alert('Error loading order details: ' + error.message);
+            }
+        }
+
+        function deleteOrder(orderId, orderNumber) {
+            if (confirm(`Are you sure you want to delete Order #${orderNumber}?\n\nThis action cannot be undone.`)) {
+                // First, check if there's a payment slip to delete from storage
+                database.ref(`orders/${orderId}/bankTransfer`).once('value').then(snapshot => {
+                    const bankTransfer = snapshot.val();
+                    if (bankTransfer && bankTransfer.receiptUrl) {
+                        // Delete the file from storage
+                        const fileUrl = bankTransfer.receiptUrl;
+                        const fileRef = storage.refFromURL(fileUrl);
+                        return fileRef.delete();
+                    }
+                }).then(() => {
+                    // Then delete the order from database
+                    return database.ref(`orders/${orderId}`).remove();
+                }).then(() => {
+                    alert('Order deleted successfully!');
+                    loadOrders();
+                }).catch(error => {
+                    alert('Error deleting order: ' + error.message);
+                });
+            }
+        }
+
+        function bulkDeleteOrders() {
+            const checkboxes = document.querySelectorAll('.order-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert('Please select orders to delete');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete ${checkboxes.length} selected order(s)?\n\nThis action cannot be undone.`)) {
+                const promises = [];
+                checkboxes.forEach(cb => {
+                    const orderId = cb.dataset.id;
+                    promises.push(database.ref(`orders/${orderId}`).remove());
+                });
+                
+                Promise.all(promises)
+                    .then(() => {
+                        alert(`${checkboxes.length} order(s) deleted successfully!`);
+                        loadOrders();
+                    })
+                    .catch(error => {
+                        alert('Error deleting orders: ' + error.message);
+                    });
+            }
+        }
+
+        function uploadPaymentSlip(orderId) {
+            currentOrderId = orderId;
+            
+            // Get order details
+            database.ref(`orders/${orderId}`).once('value').then(snapshot => {
+                const order = snapshot.val();
+                if (order) {
+                    document.getElementById('paymentOrderId').value = order.orderId || orderId.substring(0, 8);
+                    document.getElementById('paymentCustomerName').value = order.customer?.fullName || 'N/A';
+                    document.getElementById('paymentAmount').value = order.total ? `MVR ${order.total.toFixed(2)}` : 'MVR 0.00';
+                    
+                    // Reset file upload
+                    resetPaymentUpload();
+                    
+                    paymentSlipModal.classList.add('active');
+                }
+            });
+        }
+
+        function handlePaymentFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                alert('File size exceeds 5MB limit. Please choose a smaller file.');
+                paymentFile.value = '';
+                return;
+            }
+            
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+            if (!validTypes.includes(file.type)) {
+                alert('Invalid file type. Please upload JPG, PNG, or PDF files only.');
+                paymentFile.value = '';
+                return;
+            }
+            
+            currentPaymentFile = file;
+            
+            document.getElementById('paymentFileName').textContent = file.name;
+            document.getElementById('paymentFileSize').textContent = formatFileSize(file.size);
+            paymentFilePreview.style.display = 'flex';
+            paymentUploadArea.style.display = 'none';
+            
+            // Show preview if it's an image
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    paymentImagePreview.innerHTML = `
+                        <h4 style="margin-bottom: 0.5rem; color: var(--dark);">Preview:</h4>
+                        <img src="${e.target.result}" class="image-preview" alt="Payment slip preview">
+                    `;
+                    paymentImagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type === 'application/pdf') {
+                paymentImagePreview.innerHTML = `
+                    <h4 style="margin-bottom: 0.5rem; color: var(--dark);">Preview:</h4>
+                    <div class="pdf-preview">
+                        <i class="fas fa-file-pdf"></i>
+                        <p>${file.name}</p>
+                        <small>PDF File (${formatFileSize(file.size)})</small>
+                    </div>
+                `;
+                paymentImagePreview.style.display = 'block';
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        async function savePaymentSlip() {
+            const file = currentPaymentFile;
+            const reference = document.getElementById('paymentReference').value.trim();
+            
+            if (!file) {
+                alert('Please upload a payment slip file');
+                return;
+            }
+            
+            if (!reference) {
+                alert('Please enter a payment reference number');
+                return;
+            }
+            
+            try {
+                showToast('Uploading payment slip...', 'info');
+                
+                // Generate unique filename
+                const timestamp = Date.now();
+                const fileExtension = file.name.split('.').pop();
+                const fileName = `payment_slips/${currentOrderId}_${timestamp}.${fileExtension}`;
+                
+                // Upload to Firebase Storage
+                const storageRef = storage.ref(fileName);
+                const uploadTask = storageRef.put(file);
+                
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        // Progress monitoring can be added here
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        console.log('Upload is ' + progress + '% done');
+                    },
+                    (error) => {
+                        console.error('Upload error:', error);
+                        alert('Error uploading file: ' + error.message);
+                    },
+                    async () => {
+                        // Get download URL
+                        const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                        
+                        // Save payment slip info to database
+                        const fileInfo = {
+                            receiptFileName: file.name,
+                            receiptFileSize: file.size,
+                            receiptFileType: file.type,
+                            receiptUrl: downloadURL,
+                            paymentReference: reference,
+                            uploadedAt: new Date().toISOString(),
+                            uploadedBy: currentAdmin.name
+                        };
+                        
+                        await database.ref(`orders/${currentOrderId}/bankTransfer`).update(fileInfo);
+                        
+                        // Update payment status to processing
+                        await database.ref(`orders/${currentOrderId}`).update({
+                            paymentStatus: 'processing',
+                            updatedAt: new Date().toISOString()
+                        });
+                        
+                        showToast('Payment slip uploaded successfully!', 'success');
+                        paymentSlipModal.classList.remove('active');
+                        resetPaymentUpload();
+                        loadOrders();
+                    }
+                );
+                
+            } catch (error) {
+                alert('Error saving payment slip: ' + error.message);
+            }
+        }
+
+        async function viewPaymentSlip(orderId) {
+            try {
+                const snapshot = await database.ref(`orders/${orderId}`).once('value');
+                const order = snapshot.val();
+                
+                if (order?.bankTransfer?.receiptUrl) {
+                    const bankTransfer = order.bankTransfer;
+                    
+                    let slipContent = '';
+                    if (bankTransfer.receiptFileType?.startsWith('image/')) {
+                        slipContent = `
+                            <img src="${bankTransfer.receiptUrl}" class="payment-slip-image" alt="Payment Slip">
+                        `;
+                    } else if (bankTransfer.receiptFileType === 'application/pdf') {
+                        slipContent = `
+                            <div class="pdf-preview" style="margin-bottom: 1rem;">
+                                <i class="fas fa-file-pdf"></i>
+                                <p>${bankTransfer.receiptFileName || 'Payment Slip'}</p>
+                                <small>PDF File (${formatFileSize(bankTransfer.receiptFileSize || 0)})</small>
+                            </div>
+                            <iframe src="${bankTransfer.receiptUrl}" style="width: 100%; height: 400px; border: 1px solid var(--gray-300); border-radius: var(--radius-md);"></iframe>
+                        `;
+                    } else {
+                        slipContent = `
+                            <div class="pdf-preview">
+                                <i class="fas fa-file"></i>
+                                <p>${bankTransfer.receiptFileName || 'Payment Slip'}</p>
+                                <small>${formatFileSize(bankTransfer.receiptFileSize || 0)}</small>
+                            </div>
+                        `;
+                    }
+                    
+                    slipContent += `
+                        <div class="payment-slip-details">
+                            <p><strong>Order ID:</strong> ${order.orderId || orderId.substring(0, 8)}</p>
+                            <p><strong>Customer:</strong> ${order.customer?.fullName || 'N/A'}</p>
+                            <p><strong>Amount:</strong> MVR ${order.total?.toFixed(2) || '0.00'}</p>
+                            <p><strong>Reference Number:</strong> ${bankTransfer.paymentReference || 'N/A'}</p>
+                            <p><strong>Uploaded:</strong> ${new Date(bankTransfer.uploadedAt).toLocaleString()}</p>
+                            <p><strong>Uploaded By:</strong> ${bankTransfer.uploadedBy || 'Admin'}</p>
+                        </div>
+                    `;
+                    
+                    paymentSlipContent.innerHTML = slipContent;
+                    paymentSlipPreviewModal.classList.add('active');
+                    
+                    // Set download button functionality
+                    downloadPaymentSlipBtn.onclick = () => {
+                        window.open(bankTransfer.receiptUrl, '_blank');
+                    };
+                    
+                } else {
+                    alert('No payment slip found for this order.');
+                }
+            } catch (error) {
+                alert('Error loading payment slip: ' + error.message);
+            }
+        }
+
+        function removePaymentSlip(orderId) {
+            if (confirm('Are you sure you want to remove the payment slip for this order?')) {
+                // First delete from storage
+                database.ref(`orders/${orderId}/bankTransfer`).once('value').then(snapshot => {
+                    const bankTransfer = snapshot.val();
+                    if (bankTransfer && bankTransfer.receiptUrl) {
+                        const fileUrl = bankTransfer.receiptUrl;
+                        const fileRef = storage.refFromURL(fileUrl);
+                        return fileRef.delete();
+                    }
+                }).then(() => {
+                    // Then delete from database
+                    return database.ref(`orders/${orderId}/bankTransfer`).remove();
+                }).then(() => {
+                    alert('Payment slip removed successfully!');
+                    loadOrders();
+                }).catch(error => {
+                    alert('Error removing payment slip: ' + error.message);
+                });
+            }
+        }
+
+        async function loadCustomers() {
+            try {
+                const snapshot = await database.ref('users').once('value');
+                const users = snapshot.val();
+                
+                contentArea.innerHTML = `
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Customers (${users ? Object.keys(users).length : 0})</h3>
+                        </div>
+                        <div id="customersTable">
+                            Loading...
+                        </div>
+                    </div>
+                `;
+                
+                if (!users) {
+                    document.getElementById('customersTable').innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--gray-500);">No customers found</div>';
+                    return;
+                }
+                
+                let html = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>Join Date</th>
+                                <th>Orders</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                // Get orders to count per customer
+                const ordersSnapshot = await database.ref('orders').once('value');
+                const orders = ordersSnapshot.val() || {};
+                
+                Object.entries(users).forEach(([id, user]) => {
+                    const date = new Date(user.createdAt);
+                    const formattedDate = date.toLocaleDateString();
+                    
+                    // Count orders for this user
+                    let orderCount = 0;
+                    Object.values(orders).forEach(order => {
+                        if (order.userId === id) {
+                            orderCount++;
+                        }
+                    });
+                    
+                    html += `
+                        <tr>
+                            <td><strong>${user.fullName}</strong></td>
+                            <td>${user.phone}</td>
+                            <td>${user.email || user.phone + '@aleelatrade.com'}</td>
+                            <td>${formattedDate}</td>
+                            <td>${orderCount}</td>
+                            <td><span class="status-badge status-completed">Active</span></td>
+                            <td>
+                                <button class="btn btn-xs btn-danger" onclick="deleteCustomer('${id}', '${user.fullName}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table>';
+                document.getElementById('customersTable').innerHTML = html;
+                
+            } catch (error) {
+                contentArea.innerHTML = `<div style="color: var(--danger);">Error loading customers: ${error.message}</div>`;
+            }
+        }
+
+        function deleteCustomer(userId, userName) {
+            if (confirm(`Are you sure you want to delete customer "${userName}"?\n\nThis will also delete all their orders.`)) {
+                // Delete user
+                database.ref(`users/${userId}`).remove()
+                    .then(() => {
+                        // Delete user's orders
+                        const ordersRef = database.ref('orders');
+                        ordersRef.orderByChild('userId').equalTo(userId).once('value')
+                            .then(snapshot => {
+                                const updates = {};
+                                snapshot.forEach(child => {
+                                    updates[child.key] = null;
+                                });
+                                database.ref('orders').update(updates);
+                            })
+                            .finally(() => {
+                                alert('Customer deleted successfully!');
+                                loadCustomers();
+                            });
+                    })
+                    .catch(error => {
+                        alert('Error deleting customer: ' + error.message);
+                    });
+            }
+        }
+
+        async function loadCategoriesPage() {
+            try {
+                contentArea.innerHTML = `
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Product Categories (${categories.length})</h3>
+                            <div class="table-actions">
+                                <button class="btn btn-primary" onclick="openCategoryModal()">
+                                    <i class="fas fa-plus"></i>
+                                    Add Category
+                                </button>
+                            </div>
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <div class="category-tags">
+                                ${categories.map(category => `
+                                    <div class="category-tag">
+                                        <i class="${category.icon}"></i>
+                                        ${category.name}
+                                        <button class="remove-tag" onclick="deleteCategory('${category.id}', '${category.name}')">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                            <div style="margin-top: 2rem;">
+                                <h4 style="margin-bottom: 1rem; color: var(--dark);">Category Details</h4>
+                                <table style="width: 100%;">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Name</th>
+                                            <th>Icon</th>
+                                            <th>Product Count</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="categoriesTableBody">
+                                        Loading...
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                await loadCategoriesTable();
+                
+            } catch (error) {
+                contentArea.innerHTML = `<div style="color: var(--danger);">Error loading categories: ${error.message}</div>`;
+            }
+        }
+
+        async function loadCategoriesTable() {
+            try {
+                const productsSnapshot = await database.ref('products').once('value');
+                const products = productsSnapshot.val() || {};
+                
+                // Count products per category
+                const productCounts = {};
+                Object.values(products).forEach(product => {
+                    if (product.category) {
+                        productCounts[product.category] = (productCounts[product.category] || 0) + 1;
+                    }
+                });
+                
+                let html = '';
+                categories.forEach(category => {
+                    html += `
+                        <tr>
+                            <td>${category.id}</td>
+                            <td>${category.name}</td>
+                            <td><i class="${category.icon}"></i> ${category.icon}</td>
+                            <td>${productCounts[category.id] || 0} products</td>
+                            <td>
+                                <button class="btn btn-xs btn-secondary" onclick="editCategory('${category.id}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-xs btn-danger" onclick="deleteCategory('${category.id}', '${category.name}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                document.getElementById('categoriesTableBody').innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('categoriesTableBody').innerHTML = `<tr><td colspan="5" style="color: var(--danger);">Error: ${error.message}</td></tr>`;
+            }
+        }
+
+        function openCategoryModal(category = null) {
+            editingCategoryId = category ? category.id : null;
+            
+            if (category) {
+                document.getElementById('categoryName').value = category.name;
+                document.getElementById('categoryId').value = category.id;
+                document.getElementById('categoryIcon').value = category.icon;
+                categoryModalTitle.textContent = 'Edit Category';
+                document.getElementById('categoryId').readOnly = true;
+            } else {
+                categoryForm.reset();
+                categoryModalTitle.textContent = 'Add New Category';
+                document.getElementById('categoryId').readOnly = false;
+            }
+            
+            categoryModal.classList.add('active');
+        }
+
+        function editCategory(categoryId) {
+            const category = categories.find(c => c.id === categoryId);
+            if (category) {
+                openCategoryModal(category);
+            }
+        }
+
+        async function saveCategory() {
+            const name = document.getElementById('categoryName').value.trim();
+            const id = document.getElementById('categoryId').value.trim().toLowerCase().replace(/\s+/g, '_');
+            const icon = document.getElementById('categoryIcon').value.trim();
+            
+            if (!name || !id || !icon) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            const category = {
+                name: name,
+                icon: icon,
+                updatedAt: new Date().toISOString()
+            };
+            
+            try {
+                if (editingCategoryId) {
+                    // Update existing category
+                    await database.ref(`categories/${editingCategoryId}`).update(category);
+                    alert('Category updated successfully!');
+                } else {
+                    // Check if category ID already exists
+                    const existingCategory = categories.find(c => c.id === id);
+                    if (existingCategory) {
+                        alert('Category ID already exists. Please choose a different ID.');
+                        return;
+                    }
+                    
+                    // Add new category
+                    await database.ref(`categories/${id}`).set(category);
+                    alert('Category added successfully!');
+                }
+                
+                categoryModal.classList.remove('active');
+                await loadCategoriesData();
+                loadCategoriesPage();
+                
+            } catch (error) {
+                alert('Error saving category: ' + error.message);
+            }
+        }
+
+        async function deleteCategory(categoryId, categoryName) {
+            if (confirm(`Are you sure you want to delete category "${categoryName}"?\n\nProducts in this category will become uncategorized.`)) {
+                try {
+                    await database.ref(`categories/${categoryId}`).remove();
+                    
+                    // Update products with this category to have no category
+                    const productsSnapshot = await database.ref('products').orderByChild('category').equalTo(categoryId).once('value');
+                    const updates = {};
+                    productsSnapshot.forEach(child => {
+                        updates[`${child.key}/category`] = null;
+                    });
+                    
+                    if (Object.keys(updates).length > 0) {
+                        await database.ref('products').update(updates);
+                    }
+                    
+                    alert('Category deleted successfully!');
+                    await loadCategoriesData();
+                    loadCategoriesPage();
+                    
+                } catch (error) {
+                    alert('Error deleting category: ' + error.message);
+                }
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                const snapshot = await database.ref('settings/delivery').once('value');
+                const settings = snapshot.val() || {};
+                
+                contentArea.innerHTML = `
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Settings</h3>
+                            <div class="table-actions">
+                                <button class="btn btn-primary" onclick="openSettingsModal()">
+                                    <i class="fas fa-edit"></i>
+                                    Edit Settings
+                                </button>
+                            </div>
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                                <div>
+                                    <h4 style="margin-bottom: 1rem; color: var(--dark);">Delivery Settings</h4>
+                                    <div style="background: var(--gray-100); padding: 1.5rem; border-radius: var(--radius-md);">
+                                        <p><strong>Minimum Order:</strong> MVR ${settings.minOrder || '100.00'}</p>
+                                        <p><strong>Delivery Fee:</strong> MVR ${settings.deliveryFee || '150.00'}</p>
+                                        <p><strong>Free Delivery Threshold:</strong> MVR ${settings.freeDeliveryThreshold || '1500.00'}</p>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h4 style="margin-bottom: 1rem; color: var(--dark);">Store Information</h4>
+                                    <div style="background: var(--gray-100); padding: 1.5rem; border-radius: var(--radius-md);">
+                                        <p><strong>Store Phone:</strong> ${settings.storePhone || '+960 7468757'}</p>
+                                        <p><strong>Store Email:</strong> ${settings.storeEmail || 'info@aleelatrade.com.mv'}</p>
+                                        <p><strong>Business Hours:</strong> 7:00 AM - 11:00 PM Daily</p>
+                                        <p><strong>Address:</strong> Male, Male City, Maldives</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 2rem;">
+                                <h4 style="margin-bottom: 1rem; color: var(--dark);">System Information</h4>
+                                <div style="background: var(--gray-100); padding: 1.5rem; border-radius: var(--radius-md);">
+                                    <p><strong>Admin Panel Version:</strong> 2.0.0</p>
+                                    <p><strong>Last Updated:</strong> ${new Date().toLocaleDateString()}</p>
+                                    <p><strong>Total Categories:</strong> ${categories.length}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                contentArea.innerHTML = `<div style="color: var(--danger);">Error loading settings: ${error.message}</div>`;
+            }
+        }
+
+        function openSettingsModal() {
+            database.ref('settings/delivery').once('value').then(snapshot => {
+                const settings = snapshot.val() || {};
+                
+                document.getElementById('minOrder').value = settings.minOrder || 100;
+                document.getElementById('deliveryFee').value = settings.deliveryFee || 150;
+                document.getElementById('freeDeliveryThreshold').value = settings.freeDeliveryThreshold || 1500;
+                document.getElementById('storePhone').value = settings.storePhone || '+960 7468757';
+                document.getElementById('storeEmail').value = settings.storeEmail || 'info@aleelatrade.com.mv';
+                
+                settingsModal.classList.add('active');
+            });
+        }
+
+        async function saveSettings() {
+            const settings = {
+                minOrder: parseFloat(document.getElementById('minOrder').value),
+                deliveryFee: parseFloat(document.getElementById('deliveryFee').value),
+                freeDeliveryThreshold: parseFloat(document.getElementById('freeDeliveryThreshold').value),
+                storePhone: document.getElementById('storePhone').value,
+                storeEmail: document.getElementById('storeEmail').value,
+                updatedAt: new Date().toISOString()
+            };
+            
+            try {
+                await database.ref('settings/delivery').set(settings);
+                alert('Settings saved successfully!');
+                settingsModal.classList.remove('active');
+                loadSettings();
+            } catch (error) {
+                alert('Error saving settings: ' + error.message);
+            }
+        }
+
+        function exportOrders() {
+            alert('Export feature coming soon!');
+        }
+
+        function downloadPaymentSlip() {
+            // This function is already set in viewPaymentSlip
+        }
+
+        function showToast(message, type = 'success') {
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? 'var(--primary)' : type === 'error' ? 'var(--danger)' : 'var(--warning)'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: var(--radius-md);
+                box-shadow: var(--shadow-lg);
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+            `;
+            
+            toast.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Remove toast after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+            
+            // Add CSS for animations
+            if (!document.querySelector('#toast-styles')) {
+                const style = document.createElement('style');
+                style.id = 'toast-styles';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from {
+                            transform: translateX(100%);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                    }
+                    @keyframes slideOut {
+                        from {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                        to {
+                            transform: translateX(100%);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        // Make functions available globally
+        window.viewOrder = viewOrder;
+        window.openProductModal = openProductModal;
+        window.editProduct = editProduct;
+        window.deleteProduct = deleteProduct;
+        window.deleteOrder = deleteOrder;
+        window.bulkDeleteOrders = bulkDeleteOrders;
+        window.updateOrderStatus = updateOrderStatus;
+        window.updatePaymentStatus = updatePaymentStatus;
+        window.uploadPaymentSlip = uploadPaymentSlip;
+        window.viewPaymentSlip = viewPaymentSlip;
+        window.removePaymentSlip = removePaymentSlip;
+        window.deleteCustomer = deleteCustomer;
+        window.openCategoryModal = openCategoryModal;
+        window.editCategory = editCategory;
+        window.deleteCategory = deleteCategory;
+        window.openSettingsModal = openSettingsModal;
+        window.exportOrders = exportOrders;
+    </script>
+</body>
+</html>
